@@ -16,8 +16,35 @@ dependencies {
     testImplementation group: 'io.rest-assured', name: 'rest-assured', version: '5.5.0'
     implementation group: 'io.cucumber', name: 'cucumber-java', version: '7.19.0'
     testImplementation group: 'io.cucumber', name: 'cucumber-junit', version: '7.19.0'
+    testImplementation group: 'org.json', name: 'json', version: '20240303'
+    implementation group: 'io.rest-assured', name: 'json-schema-validator', version: '5.5.0'
+    testImplementation group: 'io.rest-assured', name: 'json-path', version: '5.5.0'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.26.3'
 }
 
 test {
     useJUnitPlatform()
+    systemProperty "cucumber.filter.tags", System.getProperty ("cucumber.filter.tags")
+}
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
+tasks.register('apiTest'){
+    dependsOn assemble, testClasses
+    doLast{
+        javaexec {
+            main = "io.cucumber.core.cli.Main"
+            classpath = configurations.cucumberRuntime + sourceSets.main.output + sourceSets.test.output
+            args = [
+                    '--plugin', 'pretty',
+                    '--plugin', 'html:reports/cucumber-api-report.html',
+                    '--glue', 'stepDef',
+                    '--tags', '@api',
+                    'src/test/resources/features'
+            ]
+        }
+    }
 }
